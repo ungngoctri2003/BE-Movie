@@ -1,15 +1,122 @@
-const { Users, TypeUser, sequelize } = require("../models");
-const { Op, QueryTypes } = require("sequelize");
+const { Users, TypeUser, sequelize, PasswordResets } = require("../models");
+const { sendMail } = require("../middleware/nodoMailer");
+const { Op, QueryTypes, where } = require("sequelize");
 const bcrypt = require("bcryptjs");
+const uuid = require("uuid");
 const gravatarUrl = require("gravatar-url");
 var jwt = require("jsonwebtoken");
-const { compareBcrypt } = require("../middleware/Bcrypt");
+const { compareBcrypt, generateBcrypt } = require("../middleware/Bcrypt");
 // lấy loại người dùng từ bảng TypeUser
 const getTypeUser = async (id) => {
   const user_type = await TypeUser.findOne({ where: { id } });
   return user_type;
 };
 ///-----
+const requestPasswordReset = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+
+    // Kiểm tra xem email có tồn tại trong hệ thống hay không
+    const user = await Users.findOne({ where: { email } });
+    if (!user) {
+      return res.status(404).json({ message: "Người dùng không tồn tại" });
+    }
+    // Kiểm tra xem PasswordResets đã được định nghĩa và được kết nối đến cơ sở dữ liệu
+    if (!PasswordResets) {
+      return res.status(500).json({
+        message:
+          "Mô hình PasswordResets không được định nghĩa hoặc kết nối đến cơ sở dữ liệu",
+      });
+    }
+    const REFRESH_TOKEN = process.env.REFRESH_TOKEN;
+    // Tạo token cho việc reset password
+    const resetToken = "generatethisusingyourtokenalgorithm";
+
+    // Lưu token vào database
+    await PasswordResets.create({
+      userId: user.id,
+      resetToken,
+    });
+    console.log(email);
+    // Gửi email với link reset password
+    const resetLink = `http://localhost:3000/resetPassword/${resetToken}`;
+    const mailOptions = {
+      to: email,
+      subject: "Yêu cầu Reset Mật Khẩu",
+      html: `Click vào đây để reset mật khẩu: <a href="${resetLink}">${resetLink}</a>`,
+    };
+    await sendMail(mailOptions);
+
+    return res.json({ message: "Email reset mật khẩu đã được gửi" });
+  } catch (error) {
+    next(error);
+  }
+};
+const forgotPassword = async (req, res, next) => {
+  const { body } = req;
+  const { email } = body;
+  try {
+    const checkUser = await Users.findOne({
+      where: { email },
+    });
+
+    if (!checkUser) {
+      res.status(400).send("Email is not exist");
+    }
+    // step 1 create new passsworrd
+    const newPassword = uuid.v4();
+    // step2 ma hoa passsowd
+
+    const generatePass = generateBcrypt(newPassword);
+
+    //step 3 save pass in step 2 with checkUser
+    checkUser.password = generatePass;
+    await checkUser.save();
+
+    // step 4 send mail with passs in step 2
+    req.password = newPassword;
+    next();
+    // login with passs in  step 1
+  } catch (error) {
+    res.status(500).send(error);
+  }
+};
+
+// Hàm này sẽ reset mật khẩu dựa trên token
+const resetPassword = async (req, res, next) => {
+  try {
+    const { resetToken } = req.params;
+    const { newPassword } = req.body;
+
+    // Tìm token trong database
+    const resetRecord = await PasswordResets.findOne({
+      where: { resetToken },
+      include: Users,
+    });
+
+    // Kiểm tra xem token có hợp lệ hay không
+    if (
+      !resetRecord ||
+      resetRecord.createdAt < new Date(Date.now() - 24 * 60 * 60 * 1000)
+    ) {
+      return res
+        .status(400)
+        .json({ message: "Token không hợp lệ hoặc đã hết hạn" });
+    }
+
+    // Cập nhật mật khẩu cho người dùng
+    resetRecord.User.password = newPassword;
+    await resetRecord.User.save();
+
+    // Xóa token khỏi database
+    await resetRecord.destroy();
+
+    return res.json({ message: "Mật khẩu đã được reset thành công" });
+  } catch (error) {
+    next(error);
+  }
+};
+
 const signUp = async (req, res, next) => {
   const { userName, password, email, phoneNumber, typeUser } = req.body;
   try {
@@ -90,6 +197,7 @@ const signIn = async (req, res) => {
 const updateUser = async (req, res) => {
   const { userName, password, phoneNumber, typeUser, avatar } = req.body;
   const { file } = req;
+
   try {
     const userUpdate = req.details;
     //fnc
@@ -113,6 +221,8 @@ const updateUser = async (req, res) => {
       return userUpdate;
     };
     //end fnc
+    const user_type = await getTypeUser(typeUser);
+
     if (req.user.type === "SUPPER_ADMIN") {
       if (password) {
         const salt = bcrypt.genSaltSync(10);
@@ -125,7 +235,10 @@ const updateUser = async (req, res) => {
           typeUser,
           hashPassword
         );
-        res.status(200).send(updated);
+
+        const dataSend = { ...updated.dataValues, typeUser: user_type };
+
+        res.status(200).send(dataSend);
       } else {
         const updated = await update(
           userName,
@@ -134,7 +247,11 @@ const updateUser = async (req, res) => {
           typeUser,
           password
         );
-        res.status(200).send(updated);
+        console.log(updated);
+
+        const dataSend = { ...updated.dataValues, typeUser: user_type };
+
+        res.status(200).send(dataSend);
       }
     } else {
       if (req.user.email === userUpdate.email) {
@@ -148,7 +265,10 @@ const updateUser = async (req, res) => {
             typeUser,
             hashPassword
           );
-          res.status(200).send(updated);
+          console.log("a", updated);
+          const dataSend = { ...updated.dataValues, typeUser: user_type };
+
+          res.status(200).send(dataSend);
         } else {
           if (typeUser == 3) {
             res.status(400).send("NOT SUPPER_ADMIN");
@@ -160,7 +280,10 @@ const updateUser = async (req, res) => {
               typeUser,
               hashPassword
             );
-            res.status(200).send(updated);
+
+            const dataSend = { ...updated.dataValues, typeUser: user_type };
+
+            res.status(200).send(dataSend);
           }
         }
       } else {
@@ -340,4 +463,7 @@ module.exports = {
   deleteUser,
   BlockAndUnBlock,
   getUserWithShowTimeID,
+  requestPasswordReset,
+  resetPassword,
+  forgotPassword,
 };

@@ -14,6 +14,7 @@ const oAuth2Client = new google.auth.OAuth2(
 oAuth2Client.setCredentials({ refresh_token: REFRESH_TOKEN });
 const sendMail = async (req, res) => {
   const { email } = req.body;
+  const { password } = req;
   try {
     const accessToken = await oAuth2Client.getAccessToken();
     const transporter = nodemailer.createTransport({
@@ -29,11 +30,11 @@ const sendMail = async (req, res) => {
     });
 
     let info = await transporter.sendMail({
-      from: '"Tix Movie" <lamcongtri2003@gmail.com>', // sender address
+      from: '"Beta Movie" <lamcongtri2003@gmail.com>', // sender address
       to: email.toLowerCase(), // list of receivers
-      subject: "Tix Movie ", // Subject line
+      subject: "Beta Movie ", // Subject line
       attachDataUrls: true, //to accept base64 content in messsage
-      html: req.sendMail, // html body
+      html: req.sendMail || password, // html body
     });
     if (req.userRegister) {
       res.status(201).send({

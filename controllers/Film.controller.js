@@ -17,6 +17,7 @@ const create = async (req, res) => {
   try {
     if (file?.path) {
       const imgFilm = await file.path.replace(/\\/g, "/");
+
       const newFilm = await Films.create({
         nameFilm,
         showtime,

@@ -15,6 +15,9 @@ const {
   getUserWithShowTimeID,
   verifyEmail,
   sendVerify,
+  requestPasswordReset,
+  resetPassword,
+  forgotPassword,
 } = require("../controllers/User.controllers");
 const { uploadImage } = require("../middleware/uploads/upload-images");
 const {
@@ -22,6 +25,9 @@ const {
 } = require("../middleware/nodoMailer/contentMail/contentVerifyEmail");
 const { sendMail } = require("../middleware/nodoMailer");
 const userRouter = express.Router();
+
+userRouter.post("/forgotPassword", forgotPassword, sendMail);
+// userRouter.put("/resetPassword/:resetToken", resetPassword);
 
 userRouter.post("/signUp", signUp, contentVerifyEmail, sendMail);
 userRouter.post(
