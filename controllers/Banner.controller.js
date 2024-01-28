@@ -1,5 +1,7 @@
 const { Banners, sequelize } = require("../models");
 
+//const urlJoin = require("url-join");
+
 const createBanner = async (req, res) => {
   const { file } = req;
   try {
