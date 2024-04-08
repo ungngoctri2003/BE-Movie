@@ -22,6 +22,7 @@ io.on("connection", function (socket) {
   //! join room
   socket.on("join-room", (data) => {
     const { room, user } = data;
+    console.log("co nguoi ket noi", data);
     socket.join(room);
   });
   //! leave room
@@ -43,7 +44,7 @@ io.on("connection", function (socket) {
     socket.broadcast.to(room).emit("receive-order-seat", seats);
   });
   //! choice seat
-  socket.on("choice-seat", async (data) => {
+  socket.on("choice-  ", async (data) => {
     const { room, seat, user } = data;
     const _seat = await Seats.findOne({ where: { id: seat.id } });
     if (_seat.keepSeat) {
