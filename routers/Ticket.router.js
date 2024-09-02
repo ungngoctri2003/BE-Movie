@@ -8,6 +8,7 @@ const {
   getTicketByIdUser,
   listTicketWithUser,
   getToTalWithMonth,
+  getTotalWithDay,
   getTicketWithUser,
 } = require("../controllers/Ticket.controller");
 const { checkUserBlock } = require("../middleware/validations/checkUserBlock");
@@ -18,6 +19,7 @@ const { sendMail } = require("../middleware/nodoMailer");
 const ticketRouter = express.Router();
 
 ticketRouter.get("/total", authentication, authorize, getToTalWithMonth);
+ticketRouter.get("/totalByDay", authentication, authorize, getTotalWithDay);
 ticketRouter.post("/", authentication, create, contentQRcode, sendMail);
 ticketRouter.get("/:id", authentication, getTicketByIdUser);
 ticketRouter.post("/test", contentQRcode, sendMail);

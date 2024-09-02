@@ -99,31 +99,121 @@ const listTicketWithUser = async (req, res) => {
     res.status(500).send(error);
   }
 };
+
 const getToTalWithMonth = async (req, res) => {
   try {
+    // Nhận năm từ yêu cầu (có thể lấy từ query hoặc params tùy vào cách bạn gửi từ phía client)
+    const year = req.query.year; // Ví dụ: /api/totals?year=2023
+
+    // Kiểm tra xem người dùng có cung cấp năm hay không
+    if (!year) {
+      return res.status(400).send({ message: "Year is required" });
+    }
+
     let arr = [];
     for (let index = 1; index <= 12; index++) {
+      // Truy vấn SQL với điều kiện theo năm và tháng
       const result = await sequelize.query(
         `
-            select sum(price) as total from tickets where  month(createdAt) = ${index};
-            `,
+            SELECT SUM(price) as total 
+            FROM tickets 
+            WHERE MONTH(createdAt) = ${index} AND YEAR(createdAt) = ${year};
+        `,
         { type: QueryTypes.SELECT }
       );
+
       let totalWithMonth = result[0];
       if (totalWithMonth.total === null) {
         totalWithMonth.total = 0;
       }
       arr = [...arr, totalWithMonth];
     }
+
+    // Trả về mảng chứa tổng số tiền của từng tháng trong năm được chọn
     res.status(200).send(arr);
   } catch (error) {
     res.status(500).send(error);
   }
 };
+const getTotalWithDay = async (req, res) => {
+  try {
+    // Nhận tháng và năm từ yêu cầu (có thể lấy từ query hoặc params tùy vào cách bạn gửi từ phía client)
+    const year = req.query.year; // Ví dụ: /api/totals?year=2023&month=8
+    const month = req.query.month;
 
+    // Kiểm tra xem người dùng có cung cấp tháng và năm hay không
+    if (!year || !month) {
+      return res.status(400).send({ message: "Year and month are required" });
+    }
+
+    let arr = [];
+
+    // Giả sử một tháng có tối đa 31 ngày
+    for (let day = 1; day <= 31; day++) {
+      // Truy vấn SQL với điều kiện theo năm, tháng và ngày
+      const result = await sequelize.query(
+        `
+            SELECT SUM(price) as total 
+            FROM tickets 
+            WHERE DAY(createdAt) = ${day} 
+            AND MONTH(createdAt) = ${month} 
+            AND YEAR(createdAt) = ${year};
+        `,
+        { type: QueryTypes.SELECT }
+      );
+
+      let totalWithDay = result[0];
+      if (totalWithDay.total === null) {
+        totalWithDay.total = 0;
+      }
+      arr = [...arr, totalWithDay];
+    }
+
+    // Trả về mảng chứa tổng số tiền của từng ngày trong tháng được chọn
+    res.status(200).send(arr);
+  } catch (error) {
+    res.status(500).send(error);
+  }
+};
+const getTicketCountByDay = async (req, res) => {
+  try {
+    const year = req.body.year;
+    const month = req.body.month;
+
+    if (!year || !month) {
+      return res.status(400).send({ message: "Year and month are required" });
+    }
+
+    let arr = [];
+    for (let day = 1; day <= 31; day++) {
+      const result = await sequelize.query(
+        `
+          SELECT COUNT(*) as ticketCount 
+          FROM tickets 
+          WHERE DAY(createdAt) = ${day} 
+          AND MONTH(createdAt) = ${month} 
+          AND YEAR(createdAt) = ${year};
+        `,
+        { type: QueryTypes.SELECT }
+      );
+
+      let countWithDay = result[0];
+      if (countWithDay.ticketCount === null) {
+        countWithDay.ticketCount = 0;
+      }
+      arr = [...arr, countWithDay];
+    }
+
+    res.status(200).send(arr);
+  } catch (error) {
+    res.status(500).send(error);
+  }
+};
 module.exports = {
   create,
   getTicketByIdUser,
   listTicketWithUser,
   getToTalWithMonth,
+  getTotalWithDay,
+  getTicketCountByDay,
 };
