@@ -97,3 +97,180 @@ module.exports = {
   deleteCombo,
   update,
 };
+
+// const { PopcornDrinks, Users, sequelize } = require("../models");
+// const { QueryTypes } = require("sequelize");
+
+// const createPopcornDrinkOrder = async (req, res, next) => {
+//   const { user, popcornDrinkOrder } = req.body;
+//   try {
+//     const checkUser = await Users.findOne({
+//       where: {
+//         id: user.id,
+//         isActive: true,
+//       },
+//     });
+//     if (checkUser) {
+//       let orderSuccess = [];
+//       for (const order of popcornDrinkOrder) {
+//         const newOrder = await PopcornDrinks.create({
+//           userId: user.id,
+//           comboName: order.comboName,
+//           quantity: order.quantity,
+//           price: order.price,
+//         });
+//         if (newOrder) {
+//           await orderSuccess.push(newOrder);
+//         }
+//       }
+//       req.orderSuccess = orderSuccess;
+//       next();
+//     } else {
+//       res.status(400).send("Tài khoản tạm đã bị khóa");
+//     }
+//   } catch (error) {
+//     res.status(500).send(error);
+//   }
+// };
+
+// const getOrdersByUserId = async (req, res) => {
+//   const { id } = req.params;
+//   try {
+//     const orders = await PopcornDrinks.findAll({
+//       where: {
+//         userId: id,
+//       },
+//     });
+//     res.status(200).send(orders);
+//   } catch (error) {
+//     res.status(500).send(error);
+//   }
+// };
+
+// const listOrdersWithUser = async (req, res) => {
+//   const { id } = req.params;
+//   try {
+//     sequelize
+//       .query(
+//         `SELECT distinct orders.id as orderId, comboName, price, quantity, createdAt
+//          FROM popcornDrinks AS orders
+//          WHERE orders.userId = ${id}`,
+//         { type: QueryTypes.SELECT }
+//       )
+//       .then((data) => {
+//         res.status(200).send(data);
+//       });
+//   } catch (error) {
+//     res.status(500).send(error);
+//   }
+// };
+
+// const getTotalRevenueByMonth = async (req, res) => {
+//   try {
+//     const year = req.query.year;
+//     if (!year) {
+//       return res.status(400).send({ message: "Year is required" });
+//     }
+
+//     let arr = [];
+//     for (let index = 1; index <= 12; index++) {
+//       const result = await sequelize.query(
+//         `
+//             SELECT SUM(price * quantity) as total
+//             FROM popcornDrinks
+//             WHERE MONTH(createdAt) = ${index} AND YEAR(createdAt) = ${year};
+//         `,
+//         { type: QueryTypes.SELECT }
+//       );
+
+//       let totalWithMonth = result[0];
+//       if (totalWithMonth.total === null) {
+//         totalWithMonth.total = 0;
+//       }
+//       arr = [...arr, totalWithMonth];
+//     }
+
+//     res.status(200).send(arr);
+//   } catch (error) {
+//     res.status(500).send(error);
+//   }
+// };
+
+// const getTotalRevenueByDay = async (req, res) => {
+//   try {
+//     const year = req.query.year;
+//     const month = req.query.month;
+
+//     if (!year || !month) {
+//       return res.status(400).send({ message: "Year and month are required" });
+//     }
+
+//     let arr = [];
+//     for (let day = 1; day <= 31; day++) {
+//       const result = await sequelize.query(
+//         `
+//             SELECT SUM(price * quantity) as total
+//             FROM popcornDrinks
+//             WHERE DAY(createdAt) = ${day}
+//             AND MONTH(createdAt) = ${month}
+//             AND YEAR(createdAt) = ${year};
+//         `,
+//         { type: QueryTypes.SELECT }
+//       );
+
+//       let totalWithDay = result[0];
+//       if (totalWithDay.total === null) {
+//         totalWithDay.total = 0;
+//       }
+//       arr = [...arr, totalWithDay];
+//     }
+
+//     res.status(200).send(arr);
+//   } catch (error) {
+//     res.status(500).send(error);
+//   }
+// };
+
+// const getOrderCountByDay = async (req, res) => {
+//   try {
+//     const year = req.body.year;
+//     const month = req.body.month;
+
+//     if (!year || !month) {
+//       return res.status(400).send({ message: "Year and month are required" });
+//     }
+
+//     let arr = [];
+//     for (let day = 1; day <= 31; day++) {
+//       const result = await sequelize.query(
+//         `
+//           SELECT COUNT(*) as orderCount
+//           FROM popcornDrinks
+//           WHERE DAY(createdAt) = ${day}
+//           AND MONTH(createdAt) = ${month}
+//           AND YEAR(createdAt) = ${year};
+//         `,
+//         { type: QueryTypes.SELECT }
+//       );
+
+//       let countWithDay = result[0];
+//       if (countWithDay.orderCount === null) {
+//         countWithDay.orderCount = 0;
+//       }
+//       arr = [...arr, countWithDay];
+//     }
+
+//     res.status(200).send(arr);
+//   } catch (error) {
+//     res.status(500).send(error);
+//   }
+// };
+
+// module.exports = {
+//   createPopcornDrinkOrder,
+//   getOrdersByUserId,
+//   listOrdersWithUser,
+//   getTotalRevenueByMonth,
+//   getTotalRevenueByDay,
+//   getOrderCountByDay,
+// };

@@ -31,8 +31,10 @@ module.exports = (sequelize, DataTypes) => {
     {}
   );
 
+  // Định nghĩa các mối quan hệ (associations)
   PopcornDrinks.associate = function (models) {
-    // Define associations here
+    PopcornDrinks.belongsTo(models.Users, { foreignKey: "userId", as: "user" });
+    // Có thể định nghĩa thêm mối quan hệ khác nếu cần
   };
 
   return PopcornDrinks;
