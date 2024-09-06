@@ -6,13 +6,76 @@ paypal.configure({
   client_secret:
     "EGAGDrgVP7o4jPkLE0GTDKaWRgTyNXQeyplMerpqxZxZ1tgp5mDXGJZw4Pab3NQA6RJdD4gy6RJI6uen",
 });
+// const RequirementCheckout = (req, res) => {
+//   let total = 0;
+//   for (let index = 0; index < req.body.length; index++) {
+//     req.body[index].price *= 1;
+//     total += req.body[index].price;
+//   }
+//   var create_payment_json = {
+//     intent: "sale",
+//     payer: {
+//       payment_method: "paypal",
+//     },
+//     redirect_urls: {
+//       return_url: "http://localhost:3000/success",
+//       cancel_url: "http://localhost:3000/error",
+//     },
+//     transactions: [
+//       {
+//         item_list: {
+//           items: req.body,
+//         },
+//         amount: {
+//           currency: "USD",
+//           total: total,
+//         },
+//         description: "This is the payment description.",
+//       },
+//     ],
+//   };
+//   paypal.payment.create(create_payment_json, function (error, payment) {
+//     if (error) {
+//       throw error;
+//     } else {
+//       for (let index = 0; index < payment.links.length; index++) {
+//         if (payment.links[index].rel === "approval_url")
+//           res.status(200).send(payment.links[index].href);
+//       }
+//     }
+//   });
+// };
 const RequirementCheckout = (req, res) => {
+  // Danh sách các mục cần thanh toán
+  let items = [];
+
+  // Tổng tiền thanh toán
   let total = 0;
-  for (let index = 0; index < req.body.length; index++) {
-    req.body[index].price *= 1;
-    total += req.body[index].price;
-  }
-  var create_payment_json = {
+
+  // Duyệt qua tất cả các mục trong req.body
+  req.body.forEach((item) => {
+    // Chuyển đổi price thành số và kiểm tra tính hợp lệ
+    const price = parseFloat(item.price);
+    if (isNaN(price)) {
+      return res
+        .status(400)
+        .json({ error: `Invalid price for item: ${item.name}` });
+    }
+
+    items.push({
+      name:
+        item.sku === "ticket"
+          ? `Ticket for seat ${item.name}`
+          : `Combo: ${item.name}`,
+      price: price.toFixed(2),
+      currency: item.currency || "USD",
+      quantity: item.quantity,
+    });
+    total += price * item.quantity;
+  });
+
+  // Cấu hình yêu cầu thanh toán
+  const create_payment_json = {
     intent: "sale",
     payer: {
       payment_method: "paypal",
@@ -24,23 +87,27 @@ const RequirementCheckout = (req, res) => {
     transactions: [
       {
         item_list: {
-          items: req.body,
+          items: items,
         },
         amount: {
           currency: "USD",
-          total: total,
+          total: total.toFixed(2),
         },
-        description: "This is the payment description.",
+        description: "Payment for tickets and combos.",
       },
     ],
   };
+
+  // Tạo thanh toán PayPal
   paypal.payment.create(create_payment_json, function (error, payment) {
     if (error) {
       throw error;
     } else {
+      // Gửi URL phê duyệt của PayPal cho phía frontend
       for (let index = 0; index < payment.links.length; index++) {
-        if (payment.links[index].rel === "approval_url")
-          res.status(200).send(payment.links[index].href);
+        if (payment.links[index].rel === "approval_url") {
+          return res.status(200).send(payment.links[index].href);
+        }
       }
     }
   });

@@ -32,8 +32,8 @@ popcornDrinkRouter.delete(
 );
 popcornDrinkRouter.put(
   "/:id",
-  // authentication,
-  // authorize,
+  authentication,
+  authorize,
   checkExists(PopcornDrinks),
   uploadImage("popcorn_drinks"),
   update

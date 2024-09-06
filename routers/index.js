@@ -12,6 +12,7 @@ const { userRouter } = require("./User.routers");
 const { bannerRoute } = require("./Banner.router");
 const { feedbackRouter } = require("./Feedback.router");
 const { popcornDrinkRouter } = require("./popcornDrink.router");
+const { comboRouter } = require("./Combos.router");
 
 const rootRouter = express.Router();
 rootRouter.use("/typeUsers", TypeUserRouter);
@@ -27,6 +28,7 @@ rootRouter.use("/checkout", checkoutRouter);
 rootRouter.use("/banners", bannerRoute);
 rootRouter.use("/feedback", feedbackRouter);
 rootRouter.use("/combos", popcornDrinkRouter);
+rootRouter.use("/comboBy", comboRouter);
 module.exports = {
   rootRouter,
 };
