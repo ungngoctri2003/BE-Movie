@@ -19,6 +19,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.STRING,
         allowNull: true,
       },
+      isActive: {
+        type: DataTypes.BOOLEAN,
+        defaultValue: true, // Hoặc false tùy thuộc vào yêu cầu của bạn
+      },
       createdAt: {
         allowNull: false,
         type: DataTypes.DATE,

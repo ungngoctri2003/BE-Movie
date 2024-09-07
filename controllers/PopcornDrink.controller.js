@@ -89,11 +89,23 @@ const update = async (req, res) => {
     res.status(500).send(error);
   }
 };
-
+const changeStatusCombo = async (req, res) => {
+  const { body, details } = req;
+  console.log(body, details);
+  const { isActive } = body;
+  try {
+    details.isActive = isActive;
+    await details.save();
+    res.status(200).send(details);
+  } catch (error) {
+    res.status(500).send(error);
+  }
+};
 module.exports = {
   create,
   getAll,
   getDetails,
   deleteCombo,
   update,
+  changeStatusCombo,
 };

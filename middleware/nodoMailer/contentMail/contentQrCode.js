@@ -1,18 +1,37 @@
 const { generateQRcode } = require("../../QRCode");
 
 const contentQRcode = async (req, res, next) => {
-  const { film, user, listTicket, idShowTime } = req.body;
+  const { film, user, listTicket, idShowTime, listCombos } = req.body;
+
+  // Lấy thông tin ghế ngồi từ listTicket
+  const seatNames = listTicket.map((ticket) => ticket.seatName).join(", ");
+
+  // Tạo đối tượng dữ liệu cho QR code
   const data_QR = {
     email: user.email,
-    showdate: film.showDate,
+    seatNames: seatNames, // Sử dụng các tên ghế từ listTicket
+    listTicket: listTicket,
     film: film.nameFilm,
     idshowtime: idShowTime,
-    listTicket,
+    listCombos: listCombos,
   };
-  //
 
+  // Tạo QR code
   const qrcode = await generateQRcode(data_QR);
-  const content = `<div style="text-align: center;   text-transform: uppercase; color: #ff6f61; font-size: 30px; font-weight: bold; margin-bottom: 25px; font-family: Arial, sans-serif;">
+
+  // Tạo nội dung email
+  const comboDetails = listCombos
+    .map(
+      (combo) => `
+    <p><strong>Combo:</strong> ${combo.name}</p>
+    <p><strong>Giá:</strong> ${combo.price}</p>
+    <p><strong>Số lượng:</strong> ${combo.quantity}</p>
+  `
+    )
+    .join("");
+
+  const content = `
+<div style="text-align: center; text-transform: uppercase; color: #ff6f61; font-size: 30px; font-weight: bold; margin-bottom: 25px; font-family: Arial, sans-serif;">
     🎬 Beta Movie xin gửi bạn thông tin vé 🎫
 </div>  
 <div style="border: 1px solid #e0e0e0; padding: 35px; border-radius: 20px; background: linear-gradient(135deg, #ffffff, #f1f1f1); box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);">
@@ -22,7 +41,11 @@ const contentQRcode = async (req, res, next) => {
             <p><strong>Tên phim:</strong> ${film.nameFilm}</p>
             <p><strong>Cụm rạp:</strong> ${film.groupName}</p>
             <p><strong>Rạp chiếu:</strong> ${film.rapChieu}</p>
-            <p><strong>Thời gian:</strong> ${film.showDate}</p>
+            <p><strong>Thời gian chiếu:</strong> ${new Date(
+              film.showDate
+            ).toLocaleString()}</p>
+            <p><strong>Ghế ngồi:</strong> ${seatNames}</p>
+            ${comboDetails}
         </div>
 
         <!-- QR Code -->
@@ -33,11 +56,12 @@ const contentQRcode = async (req, res, next) => {
         </div>
     </div>
 </div>
-
 `;
+
   req.sendMail = content;
   next();
 };
+
 module.exports = {
   contentQRcode,
 };

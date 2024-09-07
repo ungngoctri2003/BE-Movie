@@ -11,6 +11,7 @@ const {
   getAll,
   getDetails,
   update,
+  changeStatusCombo,
 } = require("../controllers/PopcornDrink.controller");
 const popcornDrinkRouter = express.Router();
 
@@ -37,6 +38,13 @@ popcornDrinkRouter.put(
   checkExists(PopcornDrinks),
   uploadImage("popcorn_drinks"),
   update
+);
+popcornDrinkRouter.put(
+  "/status/:id",
+  authentication,
+  authorize,
+  checkExists(PopcornDrinks),
+  changeStatusCombo
 );
 
 module.exports = {

@@ -36,7 +36,7 @@ const getAll = async (req, res) => {
   const { name } = req.query;
   try {
     const listShowTimes = await sequelize.query(
-      `select distinct showtimes.id ,films.nameFilm ,cinemas.name AS nameCinema ,groupcinemas.groupName ,rooms.roomName ,showDate ,showtimes.createdAt ,showtimes.updatedAt, count(*) as numberTicket
+      `select distinct showtimes.id, showtimes.isActive ,films.nameFilm ,cinemas.name AS nameCinema ,groupcinemas.groupName ,rooms.roomName ,showDate ,showtimes.createdAt ,showtimes.updatedAt, count(*) as numberTicket
         from (((((showtimes 
         inner join films on showtimes.idFilm = films.id)
         inner join cinemas on showtimes.idCinema = cinemas.id)
@@ -234,6 +234,18 @@ const update = async (req, res) => {
     res.status(500).send(error);
   }
 };
+const changeStatusShowTime = async (req, res) => {
+  const { body, details } = req;
+  console.log(" check body: ", body, "check deltails", details);
+  const { isActive } = body;
+  try {
+    details.isActive = isActive;
+    await details.save();
+    res.status(200).send(details);
+  } catch (error) {
+    res.status(500).send(error);
+  }
+};
 module.exports = {
   create,
   getAll,
@@ -242,4 +254,5 @@ module.exports = {
   update,
   getShowTimeWithIDCinemaIDFilm,
   showtimesWithGroupCinemas,
+  changeStatusShowTime,
 };

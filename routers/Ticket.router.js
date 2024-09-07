@@ -9,7 +9,7 @@ const {
   listTicketWithUser,
   getToTalWithMonth,
   getTotalWithDay,
-  getTicketWithUser,
+  getTicketByDay,
 } = require("../controllers/Ticket.controller");
 const { checkUserBlock } = require("../middleware/validations/checkUserBlock");
 const {
@@ -29,7 +29,7 @@ ticketRouter.get(
   checkExists(Users),
   listTicketWithUser
 );
-
+ticketRouter.post("/day", getTicketByDay);
 module.exports = {
   ticketRouter,
 };

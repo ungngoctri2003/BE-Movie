@@ -175,45 +175,83 @@ const getTotalWithDay = async (req, res) => {
     res.status(500).send(error);
   }
 };
-const getTicketCountByDay = async (req, res) => {
+const getTicketByDay = async (req, res) => {
   try {
-    const year = req.body.year;
-    const month = req.body.month;
+    const { year, month, day } = req.body;
 
-    if (!year || !month) {
-      return res.status(400).send({ message: "Year and month are required" });
+    // Kiểm tra xem year, month và day có được cung cấp không
+    if (!year || !month || !day) {
+      return res
+        .status(400)
+        .send({ message: "Year, month, and day are required" });
     }
 
-    let arr = [];
-    for (let day = 1; day <= 31; day++) {
-      const result = await sequelize.query(
-        `
-          SELECT COUNT(*) as ticketCount 
-          FROM tickets 
-          WHERE DAY(createdAt) = ${day} 
-          AND MONTH(createdAt) = ${month} 
-          AND YEAR(createdAt) = ${year};
-        `,
-        { type: QueryTypes.SELECT }
-      );
+    // Truy vấn lấy tất cả các combo trong ngày cụ thể
+    const combos = await sequelize.query(
+      `
+        SELECT 
+  u.userName AS userName, 
+  GROUP_CONCAT(s.seatName ORDER BY s.seatName ASC) AS seatNames, 
+  films.nameFilm,  -- Giữ tên phim
+  cinemas.name AS cinemaName, 
+  rooms.roomName,
+  showtimes.showDate AS showDate,  
+  SUM(s.price) AS totalPrice  
+FROM 
+  tickets c
+JOIN 
+  users u ON c.userId = u.id
+JOIN 
+  seats s ON c.seatId = s.id
+JOIN 
+  showtimes ON s.idShowTime = showtimes.id
+JOIN 
+  films ON showtimes.idFilm = films.id
+JOIN 
+  cinemas ON showtimes.idCinema = cinemas.id
+JOIN 
+  rooms ON showtimes.idRoom = rooms.id
+WHERE 
+  DAY(c.createdAt) = :day 
+  AND MONTH(c.createdAt) = :month 
+  AND YEAR(c.createdAt) = :year
+GROUP BY 
+  u.userName, 
+  showtimes.id, 
+  films.nameFilm,  
+  cinemas.name, 
+  rooms.roomName;
 
-      let countWithDay = result[0];
-      if (countWithDay.ticketCount === null) {
-        countWithDay.ticketCount = 0;
+      `,
+      {
+        replacements: { day, month, year },
+        type: QueryTypes.SELECT,
       }
-      arr = [...arr, countWithDay];
-    }
+    );
 
-    res.status(200).send(arr);
+    // Tính tổng số tiền từ các combo trong ngày đó
+    const totalAmount = combos.reduce((sum, combo) => {
+      // Chuyển giá thành số và tính tổng
+      const price = parseFloat(combo.totalPrice) || 0;
+      return sum + price;
+    }, 0);
+
+    // Gửi phản hồi với danh sách combo và tổng tiền
+    res.status(200).send({
+      combos,
+      totalAmount,
+    });
   } catch (error) {
-    res.status(500).send(error);
+    console.error("Error fetching combos by day:", error);
+    res.status(500).send({ message: "Server error", error });
   }
 };
+
 module.exports = {
   create,
   getTicketByIdUser,
   listTicketWithUser,
   getToTalWithMonth,
   getTotalWithDay,
-  getTicketCountByDay,
+  getTicketByDay,
 };

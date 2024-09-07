@@ -151,38 +151,50 @@ const getTotalComboWithDay = async (req, res) => {
 };
 
 // Đếm số lượng combo theo ngày
-const getComboCountByDay = async (req, res) => {
+const getComboByDay = async (req, res) => {
   try {
-    const year = req.body.year;
-    const month = req.body.month;
+    const { year, month, day } = req.body;
 
-    if (!year || !month) {
-      return res.status(400).send({ message: "Year and month are required" });
+    // Kiểm tra xem year, month và day có được cung cấp không
+    if (!year || !month || !day) {
+      return res
+        .status(400)
+        .send({ message: "Year, month, and day are required" });
     }
 
-    let arr = [];
-    for (let day = 1; day <= 31; day++) {
-      const result = await sequelize.query(
-        `
-          SELECT COUNT(*) as comboCount 
-          FROM combos 
-          WHERE DAY(createdAt) = ${day} 
-          AND MONTH(createdAt) = ${month} 
-          AND YEAR(createdAt) = ${year};
-        `,
-        { type: QueryTypes.SELECT }
-      );
-
-      let countWithDay = result[0];
-      if (countWithDay.comboCount === null) {
-        countWithDay.comboCount = 0;
+    // Truy vấn lấy tất cả các combo trong ngày cụ thể
+    const combos = await sequelize.query(
+      `
+          SELECT c.*, u.userName AS userName, films.nameFilm AS nameFilm
+        FROM combos c
+        JOIN users u ON c.idUser = u.id
+        JOIN showtimes s ON c.idShowTime = s.id
+        JOIN films ON s.idFilm = films.id
+         WHERE DAY(c.createdAt) = :day 
+        AND MONTH(c.createdAt) = :month 
+        AND YEAR(c.createdAt) = :year;
+      `,
+      {
+        replacements: { day, month, year },
+        type: QueryTypes.SELECT,
       }
-      arr = [...arr, countWithDay];
-    }
+    );
 
-    res.status(200).send(arr);
+    // Tính tổng số tiền từ các combo trong ngày đó
+    const totalAmount = combos.reduce((sum, combo) => {
+      // Chuyển giá thành số
+      const price = parseFloat(combo.price) || 0;
+      return sum + price * combo.quantity;
+    }, 0);
+
+    // Gửi phản hồi với danh sách combo và tổng tiền
+    res.status(200).send({
+      combos,
+      totalAmount,
+    });
   } catch (error) {
-    res.status(500).send(error);
+    console.error("Error fetching combos by day:", error);
+    res.status(500).send({ message: "Server error", error });
   }
 };
 
@@ -191,6 +203,6 @@ module.exports = {
   getComboByIdUser,
   getTotalComboWithMonth,
   getTotalComboWithDay,
-  getComboCountByDay,
+  getComboByDay,
   listComboWithUser,
 };

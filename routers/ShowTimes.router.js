@@ -12,6 +12,7 @@ const {
   update,
   getShowTimeWithIDCinemaIDFilm,
   showtimesWithGroupCinemas,
+  changeStatusShowTime,
 } = require("../controllers/ShowTimes.controller");
 
 const showTimeRouter = express.Router();
@@ -41,7 +42,13 @@ showTimeRouter.put(
   checkActive(ShowTimes),
   update
 );
-
+showTimeRouter.put(
+  "/status/:id",
+  authentication,
+  authorize,
+  checkExists(ShowTimes),
+  changeStatusShowTime
+);
 module.exports = {
   showTimeRouter,
 };

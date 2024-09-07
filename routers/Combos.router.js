@@ -8,7 +8,7 @@ const {
   getComboByIdUser,
   getTotalComboWithMonth,
   getTotalComboWithDay,
-  getComboCountByDay,
+  getComboByDay,
   listComboWithUser,
 } = require("../controllers/Combos.controller");
 
@@ -22,19 +22,19 @@ comboRouter.get("/user/:id", getComboByIdUser);
 
 comboRouter.get(
   "/listCombos/:id",
-  // authentication,
-  // checkExists(Users),
+  authentication,
+  checkExists(Users),
   listComboWithUser
 );
 
 // Route lấy tổng giá trị combo theo tháng, yêu cầu xác thực
-comboRouter.get("/total/month", authentication, getTotalComboWithMonth);
+comboRouter.get("/total/month", getTotalComboWithMonth);
 
 // Route lấy tổng giá trị combo theo ngày, yêu cầu xác thực
-comboRouter.get("/total/day", authentication, getTotalComboWithDay);
+comboRouter.get("/total/day", getTotalComboWithDay);
 
 // Route đếm số lượng combo theo ngày, yêu cầu xác thực
-comboRouter.post("/count/day", authentication, getComboCountByDay);
+comboRouter.post("/day", getComboByDay);
 
 module.exports = {
   comboRouter,
