@@ -7,8 +7,11 @@ const { PORT } = require("./utils/util");
 const { rootRouter } = require("./routers");
 const { createServer } = require("http");
 const { io } = require("./utils/socket");
+const swaggerUi = require("swagger-ui-express");
+const swaggerJsdoc = require("swagger-jsdoc");
 
 const app = express();
+
 const httpServer = createServer(app);
 io.attach(httpServer);
 // {
@@ -17,6 +20,26 @@ io.attach(httpServer);
 //     methods: ["GET", "POST"],
 //   },
 // }
+
+// Thiết lập các tùy chọn cho swagger-jsdoc
+const swaggerOptions = {
+  definition: {
+    openapi: "3.0.0",
+    info: {
+      title: "API Documentation",
+      version: "1.0.0",
+      description: "Express API with Swagger",
+    },
+  },
+  apis: ["./routers/*.js"], // Đường dẫn đến các file chứa định nghĩa API
+};
+
+// Khởi tạo swagger-jsdoc
+const swaggerDocs = swaggerJsdoc(swaggerOptions);
+
+// Tích hợp swagger-ui-express
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
+
 app.use(cors());
 app.use(express.json());
 // setup static file
