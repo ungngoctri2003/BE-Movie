@@ -4,7 +4,6 @@ const { QueryTypes } = require("sequelize");
 // Tạo combo
 const createCombo = async (req, res, next) => {
   const { user, listCombos, idShowTime } = req.body;
-  console.log("check data: ", req.body);
   try {
     const checkUser = await Users.findOne({
       where: {
@@ -25,7 +24,6 @@ const createCombo = async (req, res, next) => {
           quantity: combo.quantity,
           popcornDrinkId: combo.id,
         });
-        console.log("newCombo", newCombo);
         if (newCombo) {
           combos.idUser = user.id;
           await combos.save();

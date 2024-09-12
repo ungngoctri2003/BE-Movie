@@ -7,10 +7,11 @@ module.exports = (sequelize, DataTypes) => {
      * This method is not a part of Sequelize lifecycle.
      * The `models/index` file will call this method automatically.
      */
-    static associate({ TypeUser, Tickets }) {
+    static associate({ TypeUser, Tickets, Transactions }) {
       // define association here
       this.belongsTo(TypeUser, { foreignKey: "typeUser", as: "type_user" });
       this.hasMany(Tickets, { foreignKey: "userId", as: "user" });
+      this.hasMany(Transactions, { foreignKey: "userId", as: "transactions" });
     }
   }
   Users.init(
@@ -62,6 +63,11 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.BOOLEAN,
       },
       isActive: DataTypes.BOOLEAN,
+      // Thêm trường points
+      points: {
+        type: DataTypes.INTEGER,
+        defaultValue: 0, // Giá trị mặc định là 0
+      },
     },
     {
       sequelize,

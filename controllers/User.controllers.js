@@ -195,23 +195,27 @@ const signIn = async (req, res) => {
   }
 };
 const updateUser = async (req, res) => {
-  const { userName, password, phoneNumber, typeUser, avatar } = req.body;
+  const { userName, password, phoneNumber, typeUser, avatar, points } =
+    req.body; // Thêm 'points'
   const { file } = req;
 
   try {
     const userUpdate = req.details;
-    //fnc
+
+    // Function update
     const update = async (
       userName = userUpdate.userName,
       phoneNumber = userUpdate.phoneNumber,
       avatar = userUpdate.avatar,
       typeUser = userUpdate.typeUser,
-      password = userUpdate.password
+      password = userUpdate.password,
+      points = userUpdate.points // Thêm 'points' với giá trị mặc định
     ) => {
       userUpdate.userName = userName;
       userUpdate.password = password;
       userUpdate.phoneNumber = phoneNumber;
       userUpdate.typeUser = typeUser;
+      userUpdate.points = points; // Cập nhật trường 'points'
       if (file?.path) {
         userUpdate.avatar = `${file.path}`;
       } else {
@@ -220,7 +224,7 @@ const updateUser = async (req, res) => {
       await userUpdate.save();
       return userUpdate;
     };
-    //end fnc
+
     const user_type = await getTypeUser(typeUser);
 
     if (req.user.type === "SUPPER_ADMIN") {
@@ -233,7 +237,8 @@ const updateUser = async (req, res) => {
           phoneNumber,
           avatar,
           typeUser,
-          hashPassword
+          hashPassword,
+          points // Thêm 'points' khi update
         );
 
         const dataSend = { ...updated.dataValues, typeUser: user_type };
@@ -245,7 +250,8 @@ const updateUser = async (req, res) => {
           phoneNumber,
           avatar,
           typeUser,
-          password
+          password,
+          points // Thêm 'points' khi update
         );
         console.log(updated);
 
@@ -263,7 +269,8 @@ const updateUser = async (req, res) => {
             phoneNumber,
             avatar,
             typeUser,
-            hashPassword
+            hashPassword,
+            points // Thêm 'points' khi update
           );
           console.log("a", updated);
           const dataSend = { ...updated.dataValues, typeUser: user_type };
@@ -278,7 +285,8 @@ const updateUser = async (req, res) => {
               phoneNumber,
               avatar,
               typeUser,
-              hashPassword
+              password,
+              points // Thêm 'points' khi update
             );
 
             const dataSend = { ...updated.dataValues, typeUser: user_type };
@@ -294,6 +302,7 @@ const updateUser = async (req, res) => {
     res.status(500).send(error);
   }
 };
+
 const getAllUser = async (req, res) => {
   const { name } = req.query;
   try {
